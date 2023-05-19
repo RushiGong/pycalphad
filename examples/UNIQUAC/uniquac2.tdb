@@ -1,0 +1,43 @@
+$ Database file written by Open Calphad 2023-03-13
+
+ELEMENT /-  Electron_gas              0.0000E+00  0.0000E+00  0.0000E+00 !
+ELEMENT VA  Vaccum                    0.0000E+00  0.0000E+00  0.0000E+00 !
+ELEMENT A   LIQUID                    1.0000E+02  0.0000E+00  1.0000E+00 !
+ELEMENT B   LIQUID                    1.0000E+02  0.0000E+00  1.0000E+00 !
+
+$ =================
+
+SPECIES ACETONITRILE              A !
+SPECIES N_HEPTANE                 B !
+
+$ =================
+
+FUNCTION RTLNP 10 R*T*LN(1.0D-5*P); 20000 N !
+FUNCTION TAUAB   200 +EXP(-23.71*T**(-1)); 1000 N !
+FUNCTION TAUBA   200 +EXP(-545.71*T**(-1)); 1000 N !
+
+$ =================
+
+
+TYPE_DEFINITION % SEQ * !
+DEFINE_SYSTEM_DEFAULT ELEMENT 2 !
+DEFAULT_COMMAND DEF_SYS_ELEMENT  VA /- !
+
+
+$ =================
+
+
+ PHASE LIQUID:L %  1   1.000 !
+     CONSTITUENT LIQUID:L :ACETONITRILE N_HEPTANE:!
+     PARAMETER UQT&N_HEPTANE#1(LIQUID,ACETONITRILE;0)  200 +TAUBA; 700 N 
+            BOSSE !
+     PARAMETER UQT&ACETONITRILE#1(LIQUID,N_HEPTANE;0)  200 +TAUAB; 700 N 
+            BOSSE !
+
+$ =================
+
+
+ LIST_OF_REFERENCES
+ NUMBER  SOURCE
+BOSSE           '*** Not set by database or user'
+!
