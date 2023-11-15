@@ -394,7 +394,7 @@ X = MoleFraction
 W = MassFraction
 MU = ChemicalPotential
 NP = PhaseFraction
-si_gas_constant = R = Float(8.3145) # ideal gas constant
+si_gas_constant = R = Float(8.31451) # ideal gas constant
 
 CONDITIONS_REQUIRING_HESSIANS = {ChemicalPotential, PhaseFraction}
 
