@@ -15,9 +15,6 @@
   <Species id="N_HEPTANE" charge="0">
     <ChemicalElement refid="H" ratio="1.0"/>
   </Species>
-  <Expr id="VV0001">
-    <Interval in="T" lower="298.15" upper="2000">-23.71</Interval>
-  </Expr>
   <Phase id="LIQUID">
     <Model type="UNIQUAC">
       <ConstituentArray>
@@ -43,13 +40,13 @@
       </ConstituentArray>
       <Interval in="T" lower="298.15" upper="6000.0">0</Interval>
     </Parameter>
-    <Parameter type='UQCQ'>1.72<ConstituentArray><Site refid="0"><Constituent refid="ACETONITRILE"/></Site></ConstituentArray></Parameter>
-    <Parameter type='UQCR'>1.87<ConstituentArray><Site refid="0"><Constituent refid="ACETONITRILE"/></Site></ConstituentArray></Parameter>
-    <Parameter type='UQCQ'>4.4<ConstituentArray><Site refid="0"><Constituent refid="N_HEPTANE"/></Site></ConstituentArray></Parameter>
-    <Parameter type='UQCR'>5.17<ConstituentArray><Site refid="0"><Constituent refid="N_HEPTANE"/></Site></ConstituentArray></Parameter>
+    <Parameter type='UQCQ'>3<ConstituentArray><Site refid="0"><Constituent refid="ACETONITRILE"/></Site></ConstituentArray></Parameter>
+    <Parameter type='UQCR'>3.3<ConstituentArray><Site refid="0"><Constituent refid="ACETONITRILE"/></Site></ConstituentArray></Parameter>
+    <Parameter type='UQCQ'>3<ConstituentArray><Site refid="0"><Constituent refid="N_HEPTANE"/></Site></ConstituentArray></Parameter>
+    <Parameter type='UQCR'>3.3<ConstituentArray><Site refid="0"><Constituent refid="N_HEPTANE"/></Site></ConstituentArray></Parameter>
     <Parameter type="UQCZ">10<ConstituentArray><Site refid="0"><Constituent refid="ACETONITRILE"/></Site></ConstituentArray></Parameter>
     <Parameter type="UQCZ">10<ConstituentArray><Site refid="0"><Constituent refid="N_HEPTANE"/></Site></ConstituentArray></Parameter>
-    <Parameter type="UQCT">exp(VV0001*T**(-1))<ConstituentArray><Site refid="0"><Constituent refid="ACETONITRILE"/><Constituent refid="N_HEPTANE"/></Site></ConstituentArray><Exponents>0.0 1.0</Exponents></Parameter>
-    <Parameter type="UQCT">exp(-545.71*T**(-1))<ConstituentArray><Site refid="0"><Constituent refid="ACETONITRILE"/><Constituent refid="N_HEPTANE"/></Site></ConstituentArray><Exponents>1.0 0.0</Exponents></Parameter>
+    <Parameter type="UQCT">exp(-180/T)<ConstituentArray><Site refid="0"><Constituent refid="ACETONITRILE"/><Constituent refid="N_HEPTANE"/></Site></ConstituentArray><Exponents>0.0 1.0</Exponents></Parameter>
+    <Parameter type="UQCT">exp(-180/T)<ConstituentArray><Site refid="0"><Constituent refid="ACETONITRILE"/><Constituent refid="N_HEPTANE"/></Site></ConstituentArray><Exponents>1.0 0.0</Exponents></Parameter>
   </Phase>
 </Database>
