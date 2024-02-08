@@ -1,6 +1,6 @@
 {
     "model_name": "NewModel",
-    "basic_functions": ["build_phase"],
+    "basic_functions": ["default"],
     "energy_contributions": {"ref": "reference_energy", "idmix": "ideal_mixing_energy", "xsmix": "excess_mixing_energy"},
     "parameters_functions": {"v_i": ["volume parameters", ["i: v.Species"]], 
     "Z": ["coordination numbers"], 

@@ -172,6 +172,10 @@
         {
             "name": "_pure_element_test",
             "content": "\n    def _pure_element_test(constituent_array):\n            all_comps = set()\n            for sublattice in constituent_array:\n                if len(sublattice) != 1:\n                    return False\n                all_comps.add(sublattice[0].name)\n            pure_els = all_comps.intersection(model_pure_elements)\n            return len(pure_els) == 1"
+        },
+        {
+            "name": "quantities",
+            "content": "\n    DOO = degree_of_ordering\n\n    # Can be defined as a list of pre-computed first derivatives\n    gradient = None\n\n    # Note: In order-disorder phases, TC will always be the *disordered* value of TC\n    curie_temperature = TC = S.Zero\n    beta = BMAG = S.Zero\n    neel_temperature = NT = S.Zero\n\n    #pylint: disable=C0103\n    # These are standard abbreviations from Thermo-Calc for these quantities\n    energy = GM = property(lambda self: self.ast)\n    formulaenergy = G = property(lambda self: self.ast * self._site_ratio_normalization)\n    entropy = SM = property(lambda self: -self.GM.diff(v.T))\n    enthalpy = HM = property(lambda self: self.GM - v.T*self.GM.diff(v.T))\n    heat_capacity = CPM = property(lambda self: -v.T*self.GM.diff(v.T, v.T))\n    #pylint: enable=C0103\n    mixing_energy = GM_MIX = property(lambda self: self.GM - self.endmember_reference_model.GM)\n    mixing_enthalpy = HM_MIX = property(lambda self: self.GM_MIX - v.T*self.GM_MIX.diff(v.T))\n    mixing_entropy = SM_MIX = property(lambda self: -self.GM_MIX.diff(v.T))\n    mixing_heat_capacity = CPM_MIX = property(lambda self: -v.T*self.GM_MIX.diff(v.T, v.T))\n"
         }
     ]
 }
