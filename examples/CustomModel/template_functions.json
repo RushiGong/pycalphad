@@ -1,5 +1,5 @@
 {
-    "imports": "\nimport copy\nimport warnings\nfrom symengine import exp, log, Abs, Add, And, Float, Mul, Piecewise, Pow, S, sin, StrictGreaterThan, Symbol, zoo, oo\nfrom tinydb import where\nimport pycalphad.variables as v\nfrom pycalphad.core.errors import DofError\nfrom pycalphad.core.constants import MIN_SITE_FRACTION\nfrom pycalphad.core.utils import unpack_components, get_pure_elements, wrap_symbol\nimport numpy as np\nfrom collections import OrderedDict\n",
+    "imports": "\nimport copy\nimport warnings\nfrom symengine import exp, log, Abs, Add, And, Float, Mul, Piecewise, Pow, S, sin, StrictGreaterThan, Symbol, zoo, oo\nfrom tinydb import where\nimport pycalphad.variables as v\nfrom pycalphad.core.errors import DofError\nfrom pycalphad.core.constants import MIN_SITE_FRACTION\nfrom pycalphad.core.utils import unpack_components, get_pure_elements, wrap_symbol\nimport numpy as np\nfrom pycalphad import Model\nfrom collections import OrderedDict\n",
     "functions": [
         {
             "name": "_toop_filter",
