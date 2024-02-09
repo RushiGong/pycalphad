@@ -79,7 +79,7 @@
                     <zeroOrMore>
                         <ref name="Interval"/>
                     </zeroOrMore>
-                    <ref name="UNIQUACConstituentArray"/>
+                    <ref name="NewModelConstituentArray"/>
                     <choice>
                         <optional>
                             <element name="Exponents">
