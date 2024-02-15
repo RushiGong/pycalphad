@@ -5,30 +5,30 @@
 # Set color cycle: blue, green, yellow, red, violet, gray
 
 # Set default figure size
-figure.figsize : 3, 2.5
+figure.figsize : 4, 3
 figure.dpi: 300
 # Set x axis
-xtick.top: True
+xtick.top: False
 xtick.direction : in
 xtick.major.size : 5
 xtick.major.width : 0.8
 xtick.minor.size : 4
 xtick.minor.width : 0.8
-xtick.minor.visible : True
+xtick.minor.visible : False
 
 # Set y axis
-ytick.right: True
+ytick.right: False
 ytick.direction : in
 ytick.major.size : 5
 ytick.major.width : 0.8
 ytick.minor.size : 4
 ytick.minor.width : 0.8
-ytick.minor.visible : True
+ytick.minor.visible : False
 
 # Set line widths
 axes.linewidth : 0.8
 grid.linewidth : 0.5
-lines.linewidth : 2
+lines.linewidth : 1.5
 
 # Remove legend frame
 legend.frameon : False
@@ -38,14 +38,14 @@ savefig.bbox : tight
 savefig.pad_inches : 0.05
 
 # Use serif fonts
-font.family: serif
-font.serif: Arial
+#font.family: serif
+#font.serif: Arial
 # mathtext.fontset: cm  # cm = Computer Modern
 
 # Use LaTeX for math formatting
-text.usetex : True
-text.latex.preamble : \usepackage{amsmath} \usepackage{amssymb} 
-font.weight: bold
-font.size: 9
-axes.labelsize: 9
-axes.titlesize: 9
+#text.usetex : True
+#text.latex.preamble : \usepackage{amsmath} \usepackage{amssymb} 
+#font.weight: bold
+font.size: 8
+axes.labelsize: 8
+#axes.titlesize: 9
