@@ -179,6 +179,9 @@ class Model(object):
         if 'mqmqa' in phase.model_hints.keys():
             from pycalphad.models.model_mqmqa import ModelMQMQA
             target_cls = ModelMQMQA
+        if 'uniquac' in phase.model_hints.keys():
+            from pycalphad.models.model_uniquac import ModelUNIQUAC
+            target_cls = ModelUNIQUAC
         return target_cls
 
     def __getnewargs_ex__(self):
