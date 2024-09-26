@@ -9,9 +9,15 @@ from tinydb import where
 import pycalphad.variables as v
 from pycalphad.core.errors import DofError
 from pycalphad.core.constants import MIN_SITE_FRACTION
-from pycalphad.core.utils import unpack_components, get_pure_elements, wrap_symbol
+from pycalphad.core.utils import unpack_species, get_pure_elements, wrap_symbol
+from pycalphad.io.tdb import get_supported_variables
 import numpy as np
 from collections import OrderedDict
+try:
+    # needs Python 3.13+
+    from warnings import deprecated
+except ImportError:
+    from typing_extensions import deprecated
 
 # Maximum number of levels deep we check for symbols that are functions of
 # other symbols
@@ -195,7 +201,7 @@ class Model(object):
         self.phase_name = phase_name.upper()
         phase = dbe.phases[self.phase_name]
         self.site_ratios = list(phase.sublattices)
-        active_species = unpack_components(dbe, comps)
+        active_species = unpack_species(dbe, comps)
         for idx, sublattice in enumerate(phase.constituents):
             subl_comps = set(sublattice).intersection(active_species)
             self.components |= subl_comps
@@ -272,7 +278,7 @@ class Model(object):
 
         for name, value in self.models.items():
             # XXX: xreplace hack because SymEngine seems to let Symbols slip in somehow
-            self.models[name] = self.symbol_replace(value, symbols).xreplace(v.supported_variables_in_databases)
+            self.models[name] = self.symbol_replace(value, symbols).xreplace(get_supported_variables())
 
         self.site_fractions = sorted([x for x in self.variables if isinstance(x, v.SiteFraction)], key=str)
         self.state_variables = sorted([x for x in self.variables if not isinstance(x, v.SiteFraction)], key=str)
@@ -436,6 +442,7 @@ class Model(object):
     formulaenergy = G = property(lambda self: self.ast * self._site_ratio_normalization)
     entropy = SM = property(lambda self: -self.GM.diff(v.T))
     enthalpy = HM = property(lambda self: self.GM - v.T*self.GM.diff(v.T))
+    formulaenthalpy = H = property(lambda self: self.G - v.T*self.G.diff(v.T))
     heat_capacity = CPM = property(lambda self: -v.T*self.GM.diff(v.T, v.T))
     #pylint: enable=C0103
     mixing_energy = GM_MIX = property(lambda self: self.GM - self.endmember_reference_model.GM)
@@ -1251,12 +1258,21 @@ class Model(object):
         num_ordered_interstitial_subls = len(ordered_phase.sublattices) - num_substitutional_sublattice_idxs
         num_disordered_interstitial_subls = len(disordered_phase.sublattices) - 1
         if num_ordered_interstitial_subls != num_disordered_interstitial_subls:
+            import textwrap
             raise ValueError(
-                f'Number of interstitial sublattices for the disordered phase '
-                f'({num_disordered_interstitial_subls}) and the ordered phase '
-                f'({num_ordered_interstitial_subls}) do not match. Got '
-                f'substitutional sublattice indices of {substitutional_sublattice_idxs}.'
-                )
+                textwrap.dedent(
+                f"""
+                Number of interstitial sublattices for the disordered phase
+                 {disordered_phase_name} ({num_disordered_interstitial_subls})
+                 and the ordered phase {ordered_phase_name}
+                 ({num_ordered_interstitial_subls}) do not match. Found substitutional
+                 sublattices in the ordered phase with indices of
+                 {substitutional_sublattice_idxs}. Ensure that all the constituents in
+                 the substitutional sublattices for the disordered and ordered phase
+                 match exactly and the constituents in the interstitial sublattices for
+                 the disordered and ordered phase match exactly.
+                """
+                ).replace("\n", ""))
         # We also validate that no physical properties have ordered
         # contributions because the underlying physical property needs to
         # paritioned and substituted for the physical property in the disordered
@@ -1342,14 +1358,14 @@ class Model(object):
 
         return ordering_energy
 
-    # TODO: fix case for VA interactions: L(PHASE,A,VA:VA;0)-type parameters
+    @deprecated("shift_reference_state is deprecated. Use `pycalphad.property_framework.ReferenceState` instead.")
     def shift_reference_state(self, reference_states, dbe, contrib_mods=None, output=('GM', 'HM', 'SM', 'CPM'), fmt_str="{}R"):
         """
         Add new attributes for calculating properties w.r.t. an arbitrary pure element reference state.
 
         Parameters
         ----------
-        reference_states : Iterable of ReferenceState
+        reference_states : Iterable of pycalphad.model.ReferenceState
             Pure element ReferenceState objects. Must include all the pure
             elements defined in the current model.
         dbe : Database
@@ -1414,7 +1430,7 @@ class Model(object):
             reference_contrib = Add(*terms)
             referenced_value = getattr(self, out) - reference_contrib
             setattr(self, fmt_str.format(out), referenced_value)
-    
+
     def volume_energy(self, dbe):
         """
         Return the volumetric contribution in symbolic form. Follows the approach by Lu, Selleby, and Sundman [1].
@@ -1423,7 +1439,7 @@ class Model(object):
         ----------
         dbe : Database
             Database containing the relevant parameters.
-        
+
         Notes
         -----
         The high-pressure portion of the model is not currently implemented.
@@ -1462,10 +1478,13 @@ class Model(object):
             (where('constituent_array').test(self._array_validity))
         )
 
-        V0 = self.redlich_kister_sum(phase, param_search, V0_param_query)
-        VA = self.redlich_kister_sum(phase, param_search, VA_param_query)
-        VK = self.redlich_kister_sum(phase, param_search, VK_param_query)
-        VC = self.redlich_kister_sum(phase, param_search, VC_param_query)
+        # V0 is given in databases per mole of formula, so we should normalize it
+        self.V0 = V0 = self.symbol_replace(self.redlich_kister_sum(phase, param_search, V0_param_query) / self._site_ratio_normalization, self._symbols)
+        # VA is given in databases per mole of atoms, so we should not normalize it
+        self.VA = VA = self.symbol_replace(self.redlich_kister_sum(phase, param_search, VA_param_query), self._symbols)
+        # TODO: unsure about the normalization of VK and VC parameters
+        self.VK = VK = self.symbol_replace(self.redlich_kister_sum(phase, param_search, VK_param_query), self._symbols)
+        self.VC = VC = self.symbol_replace(self.redlich_kister_sum(phase, param_search, VC_param_query), self._symbols)
 
         # nonmagnetic contribution to volume
         V_p0 = V0*exp(VA)
@@ -1474,7 +1493,7 @@ class Model(object):
         G_mag = self.models.get('mag')
         V_mag = G_mag.diff(v.P)
 
-        self.MV = self.molar_volume = V_p0 + V_mag
+        self.VM = self.molar_volume = V_p0 + V_mag
         volume_energy = S.Zero
 
         if VK == 0:
@@ -1527,8 +1546,8 @@ class TestModel(Model):
         self.solution = dict(list(zip(variables, solution)))
         kmax = kmax if kmax is not None else 2
         scale_factor = 1e4 * len(self.components)
-        ampl_scale = 1e3 * np.ones(kmax, dtype=np.float_)
-        freq_scale = 10 * np.ones(kmax, dtype=np.float_)
+        ampl_scale = 1e3 * np.ones(kmax, dtype=np.float64)
+        freq_scale = 10 * np.ones(kmax, dtype=np.float64)
         polys = Add(*[ampl_scale[i] * sin(freq_scale[i] * Add(*[Add(*[(varname - sol)**(j+1)
                                                                       for varname, sol in self.solution.items()])
                                                                 for j in range(kmax)]))**2

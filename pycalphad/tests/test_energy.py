@@ -55,8 +55,8 @@ def calculate_output(model, variables, output, mode='sympy'):
 def check_output(model, variables, output, known_value, mode='sympy'):
     "Check that our calculated quantity matches the known value."
     desired = calculate_output(model, variables, output, mode)
-    known_value = np.array(known_value, dtype=np.complex_)
-    desired = np.array(desired, dtype=np.complex_)
+    known_value = np.array(known_value, dtype=np.complex128)
+    desired = np.array(desired, dtype=np.complex128)
     # atol defaults to zero here, but it cannot be zero if desired is zero
     # we set it to a reasonably small number for energies and derivatives (in Joules)
     # An example where expected = 0, but known != 0 is for ideal mix xlogx terms
@@ -262,6 +262,7 @@ def test_zero_site_fraction(load_database):
         5.52773e3, mode='sympy')
 
 
+@pytest.mark.filterwarnings("ignore:shift_reference_state*:DeprecationWarning")
 @select_database("femn.tdb")
 def test_reference_energy_of_unary_twostate_einstein_magnetic_is_zero(load_database):
     """The referenced energy for the pure elements in a unary Model with twostate and Einstein contributions referenced to that phase is zero."""
@@ -273,6 +274,7 @@ def test_reference_energy_of_unary_twostate_einstein_magnetic_is_zero(load_datab
     check_output(m, statevars, 'GMR', 0.0)
 
 
+@pytest.mark.filterwarnings("ignore:shift_reference_state*:DeprecationWarning")
 @select_database("femn.tdb")
 def test_underspecified_refstate_raises(load_database):
     """A Model cannot be shifted to a new reference state unless references for all pure elements are specified."""
@@ -283,6 +285,7 @@ def test_underspecified_refstate_raises(load_database):
         m.shift_reference_state(refstates, dbf)
 
 
+@pytest.mark.filterwarnings("ignore:shift_reference_state*:DeprecationWarning")
 @select_database("femn.tdb")
 def test_reference_energy_of_binary_twostate_einstein_is_zero(load_database):
     """The referenced energy for the pure elements in a binary Model with twostate and Einstein contributions referenced to that phase is zero."""
@@ -302,6 +305,7 @@ def test_reference_energy_of_binary_twostate_einstein_is_zero(load_database):
     check_output(m, statevars_CR, 'GMR', 0.0)
 
 
+@pytest.mark.filterwarnings("ignore:shift_reference_state*:DeprecationWarning")
 @select_database("crfe_bcc_magnetic.tdb")
 def test_magnetic_reference_energy_is_zero(load_database):
     """The referenced energy binary magnetic Model is zero."""
@@ -321,6 +325,7 @@ def test_magnetic_reference_energy_is_zero(load_database):
     check_output(m, statevars_CR, 'GMR', 0.0)
 
 
+@pytest.mark.filterwarnings("ignore:shift_reference_state*:DeprecationWarning")
 def test_non_zero_reference_mixing_enthalpy_for_va_interaction():
     """The referenced mixing enthalpy for a Model with a VA interaction parameter is non-zero."""
     
@@ -358,6 +363,7 @@ def test_non_zero_reference_mixing_enthalpy_for_va_interaction():
     check_output(m, statevars_mix, 'HM_MIX', 2000.0)
 
 
+@pytest.mark.filterwarnings("ignore:shift_reference_state*:DeprecationWarning")
 @select_database("alfe.tdb")
 def test_reference_energy_for_different_phase(load_database):
     """The referenced energy a different phase should be correct."""
@@ -396,6 +402,7 @@ def test_magnetic_endmember_mixing_energy_is_zero(load_database):
     check_output(m, statevars, 'GM_MIX', 0.0)
 
 
+@pytest.mark.filterwarnings("ignore:B2_BCC is a partitioned model with an ordering energy contribution*:UserWarning")
 @select_database("alfe.tdb")
 def test_order_disorder_mixing_energy_is_nan(load_database):
     """The endmember-referenced mixing energy is undefined and the energy should be NaN."""
@@ -426,6 +433,7 @@ def test_changing_model_ast_also_changes_mixing_energy(load_database):
     check_output(m, statevars, 'GM_MIX', 0)
 
 
+@pytest.mark.filterwarnings("ignore:shift_reference_state*:DeprecationWarning")
 def test_shift_reference_state_model_contribs_take_effect():
     """Shift reference state with contrib_mods set adds contributions to the pure elements."""
     TDB = """
@@ -479,7 +487,7 @@ def test_ionic_liquid_energy_anion_sublattice(load_database):
         v.Y('IONIC_LIQ', 1, v.Species('VA')): 1e-12,
         v.Y('IONIC_LIQ', 1, v.Species('S', {'S': 1.0})): 1e-12,
     }
-    out = np.array(mod.ast.subs({**potentials, **em_FE_Sneg2}).n(real=True), dtype=np.complex_)
+    out = np.array(mod.ast.subs({**potentials, **em_FE_Sneg2}).n(real=True), dtype=np.complex128)
     assert np.isclose(out, -148395.0, atol=0.1)
 
     em_FE_VA = {
@@ -488,7 +496,7 @@ def test_ionic_liquid_energy_anion_sublattice(load_database):
         v.Y('IONIC_LIQ', 1, v.Species('VA')): 1.0,
         v.Y('IONIC_LIQ', 1, v.Species('S', {'S': 1.0})): 1e-12,
     }
-    out = np.array(mod.ast.subs({**potentials, **em_FE_VA}).n(real=True), dtype=np.complex_)
+    out = np.array(mod.ast.subs({**potentials, **em_FE_VA}).n(real=True), dtype=np.complex128)
     assert np.isclose(out, -87735.077, atol=0.1)
 
     em_FE_S = {
@@ -497,7 +505,7 @@ def test_ionic_liquid_energy_anion_sublattice(load_database):
         v.Y('IONIC_LIQ', 1, v.Species('VA')): 1e-12,
         v.Y('IONIC_LIQ', 1, v.Species('S', {'S': 1.0})): 1.0,
     }
-    out = np.array(mod.ast.subs({**potentials, **em_FE_S}).n(real=True), dtype=np.complex_)
+    out = np.array(mod.ast.subs({**potentials, **em_FE_S}).n(real=True), dtype=np.complex128)
     assert np.isclose(out, -102463.52, atol=0.1)
 
     # Test some ficticious "nice" mixing cases
@@ -507,7 +515,7 @@ def test_ionic_liquid_energy_anion_sublattice(load_database):
         v.Y('IONIC_LIQ', 1, v.Species('VA')): 0.33333333,
         v.Y('IONIC_LIQ', 1, v.Species('S', {'S': 1.0})): 0.33333333,
     }
-    out = np.array(mod.ast.subs({**potentials, **mix_equal}).n(real=True), dtype=np.complex_)
+    out = np.array(mod.ast.subs({**potentials, **mix_equal}).n(real=True), dtype=np.complex128)
     assert np.isclose(out, -130358.2, atol=0.1)
 
     mix_unequal = {
@@ -516,7 +524,7 @@ def test_ionic_liquid_energy_anion_sublattice(load_database):
         v.Y('IONIC_LIQ', 1, v.Species('VA')): 0.25,
         v.Y('IONIC_LIQ', 1, v.Species('S', {'S': 1.0})): 0.25,
     }
-    out = np.array(mod.ast.subs({**potentials, **mix_unequal}).n(real=True), dtype=np.complex_)
+    out = np.array(mod.ast.subs({**potentials, **mix_unequal}).n(real=True), dtype=np.complex128)
     assert np.isclose(out, -138484.11, atol=0.1)
 
     # Test the energies for the two equilibrium internal DOF for the conditions
@@ -526,7 +534,7 @@ def test_ionic_liquid_energy_anion_sublattice(load_database):
         v.Y('IONIC_LIQ', 1, v.Species('VA')): 1.00545E-04,
         v.Y('IONIC_LIQ', 1, v.Species('S-2', {'S': 1.0}, charge=-2)): 6.00994E-01,
     }
-    out = np.array(mod.ast.subs({**potentials, **eq_sf_1}).n(real=True), dtype=np.complex_)
+    out = np.array(mod.ast.subs({**potentials, **eq_sf_1}).n(real=True), dtype=np.complex128)
     assert np.isclose(out, -141545.37, atol=0.1)
 
     eq_sf_2 = {
@@ -535,7 +543,7 @@ def test_ionic_liquid_energy_anion_sublattice(load_database):
         v.Y('IONIC_LIQ', 1, v.Species('VA')): 1.45273E-04,
         v.Y('IONIC_LIQ', 1, v.Species('S')): 9.84476E-01,
     }
-    out = np.array(mod.ast.subs({**potentials, **eq_sf_2}).n(real=True), dtype=np.complex_)
+    out = np.array(mod.ast.subs({**potentials, **eq_sf_2}).n(real=True), dtype=np.complex128)
     assert np.isclose(out, -104229.18, atol=0.1)
 
 
