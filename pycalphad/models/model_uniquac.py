@@ -16,8 +16,8 @@ import pycalphad.variables as v
 from pycalphad import Model
 from pycalphad.core.constants import MIN_SITE_FRACTION
 from pycalphad.core.errors import DofError
-from pycalphad.core.utils import unpack_components, wrap_symbol
-
+from pycalphad.core.utils import wrap_symbol, unpack_species
+from pycalphad.io.tdb import get_supported_variables
 
 class ModelUNIQUAC(Model):
     """
@@ -48,7 +48,7 @@ class ModelUNIQUAC(Model):
         self.phase_name = phase_name.upper()
         phase = dbe.phases[self.phase_name]
         self.site_ratios = list(phase.sublattices)
-        active_species = unpack_components(dbe, comps)
+        active_species = unpack_species(dbe, comps)
         for idx, sublattice in enumerate(phase.constituents):
             subl_comps = set(sublattice).intersection(active_species)
             self.components |= subl_comps
@@ -104,11 +104,12 @@ class ModelUNIQUAC(Model):
 
         for name, value in self.models.items():
             # XXX: xreplace hack because SymEngine seems to let Symbols slip in somehow
-            self.models[name] = self.symbol_replace(value, symbols).xreplace(v.supported_variables_in_databases)
+            self.models[name] = self.symbol_replace(value, symbols).xreplace(get_supported_variables())
 
         self.site_fractions = sorted([x for x in self.variables if isinstance(x, v.SiteFraction)], key=str)
         self.state_variables = sorted([x for x in self.variables if not isinstance(x, v.SiteFraction)], key=str)
 
+    
     def reference_energy(self, dbe):
         """
         Returns the weighted average of the endmember energies in symbolic form.
@@ -278,8 +279,8 @@ class ModelUNIQUAC(Model):
         params = dbe._parameters.search(uqcz_param_query)
         for param in params:
             if param["constituent_array"][0][0] == species:
-                z=float(param["parameter"])
-        return z
+                z=param["parameter"]
+        return float(z)
     
     def cmb_p2(self, dbe):
         """

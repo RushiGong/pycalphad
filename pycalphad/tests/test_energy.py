@@ -4,13 +4,15 @@ correct abstract syntax tree for the energy.
 """
 
 import pytest
-from symengine import S
+from symengine import S, Piecewise, And, exp
 from pycalphad import Database, Model, ReferenceState
 from pycalphad.tests.fixtures import select_database, load_database
 from pycalphad.core.errors import DofError
+from pycalphad.variables import Species, T
 import pycalphad.variables as v
 import numpy as np
 from pycalphad.models.model_mqmqa import ModelMQMQA
+from pycalphad.models.model_uniquac import ModelUNIQUAC
 
 
 def make_callable(model, variables, mode=None):
@@ -1400,3 +1402,86 @@ def test_higher_order_reciprocal_parameter():
         v.T: T
     }
     check_output(mod, subs_dict, 'GM', -12817.416, mode='sympy')
+
+
+#==============
+# UNIQUAC tests
+#==============
+
+@pytest.fixture
+def uniquac_test_tdb_init():
+    return """
+    ELEMENT VA   VACUUM                    0.0000E+00  0.0000E+00  0.0000E+00!
+    ELEMENT C    GRAPHITE                  1.2011E+01  1.0540E+03  5.7423E+00!
+    ELEMENT H    1/2_MOLE_H2(GAS)          1.0079E+00  4.2340E+03  6.5285E+01!
+
+    TYPE_DEFINITION % SEQ *!
+    
+    PHASE LIQUID % 1 1 !
+    CONSTITUENT LIQUID : C, H: !
+    """
+    
+
+@pytest.fixture
+def uniquac_test_tdb_1(uniquac_test_tdb_init):
+    db = Database(uniquac_test_tdb_init)
+    db.phases["LIQUID"].model_hints={'uniquac': True}
+    db.add_parameter('UQCG', 'LIQUID', ["C"], 0, Piecewise((0, And(T < 6000.0, 298.15 <= T)), (0, True)),)
+    db.add_parameter('UQCG', 'LIQUID', ["H"], 0, Piecewise((0, And(T < 6000.0, 298.15 <= T)), (0, True)),)
+    db.add_parameter('UQCQ', 'LIQUID', ["C"], 0, 3)
+    db.add_parameter('UQCR', 'LIQUID', ["C"], 0, 3.3)
+    db.add_parameter('UQCQ', 'LIQUID', ["H"], 0, 3)
+    db.add_parameter('UQCR', 'LIQUID', ["H"], 0, 3.3)
+    db.add_parameter('UQCZ', 'LIQUID', ["C"], 0, 10)
+    db.add_parameter('UQCZ', 'LIQUID', ["H"], 0, 10)
+    db.add_parameter('UQCT', 'LIQUID', [["C", "H"]], 0, Piecewise((exp(-180/T), And(T < 6000.0, 298.15 <= T)), (0, True)), exponents=[0, 1])
+    db.add_parameter('UQCT', 'LIQUID', [["C", "H"]], 0, Piecewise((exp(-180/T), And(T < 6000.0, 298.15 <= T)), (0, True)), exponents=[1, 0])
+    return db
+
+@pytest.fixture
+def uniquac_test_tdb_2(uniquac_test_tdb_init):
+    db = Database(uniquac_test_tdb_init)
+    db.phases["LIQUID"].model_hints={'uniquac': True}
+    db.add_parameter('UQCG', 'LIQUID', ["C"], 0, Piecewise((0, And(T < 6000.0, 298.15 <= T)), (0, True)),)
+    db.add_parameter('UQCG', 'LIQUID', ["H"], 0, Piecewise((0, And(T < 6000.0, 298.15 <= T)), (0, True)),)
+    db.add_parameter('UQCQ', 'LIQUID', ["C"], 0, 1.72)
+    db.add_parameter('UQCR', 'LIQUID', ["C"], 0, 1.87)
+    db.add_parameter('UQCQ', 'LIQUID', ["H"], 0, 4.4)
+    db.add_parameter('UQCR', 'LIQUID', ["H"], 0, 5.17)
+    db.add_parameter('UQCZ', 'LIQUID', ["C"], 0, 10)
+    db.add_parameter('UQCZ', 'LIQUID', ["H"], 0, 10)
+    db.add_parameter('UQCT', 'LIQUID', [["C", "H"]], 0, Piecewise((exp(-23.71/T), And(T < 6000.0, 298.15 <= T)), (0, True)), exponents=[0, 1])
+    db.add_parameter('UQCT', 'LIQUID', [["C", "H"]], 0, Piecewise((exp(-545.71/T), And(T < 6000.0, 298.15 <= T)), (0, True)), exponents=[1, 0])
+    return db
+
+
+def test_uniquac_gibbs_energy(uniquac_test_tdb_2):
+    db = uniquac_test_tdb_2
+    mod = ModelUNIQUAC(db, ["C", "H"], "LIQUID")
+
+    subs_dict = {
+        v.SiteFraction("LIQUID", 0, v.Species("C")): 0.95,
+        v.SiteFraction("LIQUID", 0, v.Species("H")): 0.05,
+        v.T: 320
+    }
+
+    check_output(mod, subs_dict, 'GM', -127.817, mode='sympy')  # Thermochimica energy
+    
+    subs_dict = {
+        v.SiteFraction("LIQUID", 0, v.Species("C")): 0.1,
+        v.SiteFraction("LIQUID", 0, v.Species("H")): 0.9,
+        v.T: 320
+    }
+    check_output(mod, subs_dict, 'GM', -220.393, mode='sympy')  # OpenCalphad energy
+    
+def test_uniquac_entropy(uniquac_test_tdb_2):
+    db = uniquac_test_tdb_2
+    mod = ModelUNIQUAC(db, ["C", "H"], "LIQUID")
+
+    subs_dict = {
+        v.SiteFraction("LIQUID", 0, v.Species("C")): 0.1,
+        v.SiteFraction("LIQUID", 0, v.Species("H")): 0.9,
+        v.T: 320
+    }
+
+    check_output(mod, subs_dict, 'SM', 2.752, mode='sympy')  # Thermochimica energy
