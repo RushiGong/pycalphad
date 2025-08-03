@@ -280,8 +280,8 @@ class ModelUNIQUAC(Model):
         for param in params:
             if param["constituent_array"][0][0] == species:
                 z=param["parameter"]
-        return float(z)
-    
+        return z
+
     def cmb_p2(self, dbe):
         """
         Computes the second part of combinatorial contribution to the mixing energy.

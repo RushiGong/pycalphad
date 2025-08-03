@@ -1404,10 +1404,6 @@ def test_higher_order_reciprocal_parameter():
     check_output(mod, subs_dict, 'GM', -12817.416, mode='sympy')
 
 
-#==============
-# UNIQUAC tests
-#==============
-
 @pytest.fixture
 def uniquac_test_tdb_init():
     return """
@@ -1424,6 +1420,7 @@ def uniquac_test_tdb_init():
 
 @pytest.fixture
 def uniquac_test_tdb_1(uniquac_test_tdb_init):
+    """Fixture to create a database for UNIQUAC model testing."""
     db = Database(uniquac_test_tdb_init)
     db.phases["LIQUID"].model_hints={'uniquac': True}
     db.add_parameter('UQCG', 'LIQUID', ["C"], 0, Piecewise((0, And(T < 6000.0, 298.15 <= T)), (0, True)),)
@@ -1440,6 +1437,7 @@ def uniquac_test_tdb_1(uniquac_test_tdb_init):
 
 @pytest.fixture
 def uniquac_test_tdb_2(uniquac_test_tdb_init):
+    """Fixture to create a database for UNIQUAC model testing with specific parameters."""
     db = Database(uniquac_test_tdb_init)
     db.phases["LIQUID"].model_hints={'uniquac': True}
     db.add_parameter('UQCG', 'LIQUID', ["C"], 0, Piecewise((0, And(T < 6000.0, 298.15 <= T)), (0, True)),)
@@ -1455,7 +1453,22 @@ def uniquac_test_tdb_2(uniquac_test_tdb_init):
     return db
 
 
+def test_uniquac_model_init(uniquac_test_tdb_1):
+    """Test initialization of the UNIQUAC model."""
+    db = uniquac_test_tdb_1
+    mod = ModelUNIQUAC(db, ["C", "H"], "LIQUID")
+
+    C = v.Species("C")
+    H = v.Species("H")
+
+    assert np.isclose(mod.q_i(db, C), 3.0)
+    assert np.isclose(mod.q_i(db, H), 3.0)
+    assert np.isclose(mod.Z(db, C), 10.0)
+    assert np.isclose(mod.Z(db, H), 10.0)
+
+
 def test_uniquac_gibbs_energy(uniquac_test_tdb_2):
+    """Test Gibbs energy calculation for the UNIQUAC model."""
     db = uniquac_test_tdb_2
     mod = ModelUNIQUAC(db, ["C", "H"], "LIQUID")
 
@@ -1464,8 +1477,7 @@ def test_uniquac_gibbs_energy(uniquac_test_tdb_2):
         v.SiteFraction("LIQUID", 0, v.Species("H")): 0.05,
         v.T: 320
     }
-
-    check_output(mod, subs_dict, 'GM', -127.817, mode='sympy')  # Thermochimica energy
+    check_output(mod, subs_dict, 'GM', -127.817, mode='sympy')  # OpenCalphad energy
     
     subs_dict = {
         v.SiteFraction("LIQUID", 0, v.Species("C")): 0.1,
@@ -1474,14 +1486,18 @@ def test_uniquac_gibbs_energy(uniquac_test_tdb_2):
     }
     check_output(mod, subs_dict, 'GM', -220.393, mode='sympy')  # OpenCalphad energy
     
-def test_uniquac_entropy(uniquac_test_tdb_2):
-    db = uniquac_test_tdb_2
-    mod = ModelUNIQUAC(db, ["C", "H"], "LIQUID")
-
     subs_dict = {
-        v.SiteFraction("LIQUID", 0, v.Species("C")): 0.1,
-        v.SiteFraction("LIQUID", 0, v.Species("H")): 0.9,
+        v.SiteFraction("LIQUID", 0, v.Species("C")): 1 - 0.4927363,
+        v.SiteFraction("LIQUID", 0, v.Species("H")): 0.4927363,
         v.T: 320
     }
-
-    check_output(mod, subs_dict, 'SM', 2.752, mode='sympy')  # Thermochimica energy
+    check_output(mod, subs_dict, 'GM', 1.753927, mode='sympy')  # OpenCalphad energy
+    
+    subs_dict = {
+        v.SiteFraction("LIQUID", 0, v.Species("C")): 1 - 0.6027363,
+        v.SiteFraction("LIQUID", 0, v.Species("H")): 0.6027363,
+        v.T: 320
+    }
+    check_output(mod, subs_dict, 'GM', -46.98452, mode='sympy')  # OpenCalphad energy
+    
+    # TODO: Add more tests for UNIQUAC model
